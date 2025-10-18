@@ -2,10 +2,6 @@
 
 ## Aromatique Fragrances is a boutique perfume brand offering premium handcrafted perfumes for men, women, and unisex audiences.
 
-## Project info
-
-**URL**: https://lovable.dev/projects/a9932a25-26be-46cc-b850-650e939bfa0c
-
 ## How can I edit this code?
 
 **Use your preferred IDE**
