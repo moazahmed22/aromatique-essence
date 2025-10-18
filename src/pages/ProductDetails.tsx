@@ -8,20 +8,27 @@ import { perfumes } from "@/data/perfumes";
 import { useCart } from "@/contexts/CartContext";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useWishlist } from "@/contexts/wishlistContext";
 
 const ProductDetails = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { items, addToWishlist } = useWishlist();
 
   // TODO: Replace with Supabase query
   const perfume = perfumes.find((p) => p.id === Number(id));
-  
+
+  const [isWishlisted, setIsWishlisted] = useState(
+    items.some((item) => item.id === perfume.id)
+  );
+
   if (!perfume) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-heading font-bold mb-4">Product Not Found</h1>
+          <h1 className="text-4xl font-heading font-bold mb-4">
+            Product Not Found
+          </h1>
           <Link to="/shop">
             <Button>Back to Shop</Button>
           </Link>
@@ -88,19 +95,27 @@ const ProductDetails = () => {
             {/* Notes */}
             <Card className="mb-8">
               <CardContent className="pt-6">
-                <h3 className="font-heading font-semibold mb-4 text-lg">Fragrance Notes</h3>
+                <h3 className="font-heading font-semibold mb-4 text-lg">
+                  Fragrance Notes
+                </h3>
                 <div className="space-y-3">
                   <div>
                     <span className="font-medium text-sm">Top Notes:</span>
-                    <p className="text-muted-foreground">{perfume.notes.top.join(", ")}</p>
+                    <p className="text-muted-foreground">
+                      {perfume.notes.top.join(", ")}
+                    </p>
                   </div>
                   <div>
                     <span className="font-medium text-sm">Middle Notes:</span>
-                    <p className="text-muted-foreground">{perfume.notes.middle.join(", ")}</p>
+                    <p className="text-muted-foreground">
+                      {perfume.notes.middle.join(", ")}
+                    </p>
                   </div>
                   <div>
                     <span className="font-medium text-sm">Base Notes:</span>
-                    <p className="text-muted-foreground">{perfume.notes.base.join(", ")}</p>
+                    <p className="text-muted-foreground">
+                      {perfume.notes.base.join(", ")}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -109,7 +124,9 @@ const ProductDetails = () => {
             {/* Volume */}
             <div className="mb-6">
               <span className="font-medium">Volume:</span>
-              <span className="text-muted-foreground ml-2">{perfume.volume}</span>
+              <span className="text-muted-foreground ml-2">
+                {perfume.volume}
+              </span>
             </div>
 
             {/* Actions */}
@@ -126,9 +143,14 @@ const ProductDetails = () => {
                 size="lg"
                 variant="outline"
                 className={cn(isWishlisted && "border-primary text-primary")}
-                onClick={() => setIsWishlisted(!isWishlisted)}
+                onClick={() => {
+                  addToWishlist(perfume);
+                  setIsWishlisted(!isWishlisted);
+                }}
               >
-                <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")} />
+                <Heart
+                  className={cn("h-5 w-5", isWishlisted && "fill-current")}
+                />
               </Button>
             </div>
           </div>

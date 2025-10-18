@@ -7,6 +7,7 @@ import { Perfume } from "@/data/perfumes";
 import { useCart } from "@/contexts/CartContext";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useWishlist } from "@/contexts/wishlistContext";
 
 interface ProductCardProps {
   perfume: Perfume;
@@ -14,7 +15,8 @@ interface ProductCardProps {
 
 export const ProductCard = ({ perfume }: ProductCardProps) => {
   const { addToCart } = useCart();
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { items, addToWishlist } = useWishlist();
+  const [isWishlisted, setIsWishlisted] = useState(items.some((item)=> item.id === perfume.id));
 
   return (
     <Card className="group overflow-hidden transition-all hover:shadow-luxury">
@@ -39,6 +41,7 @@ export const ProductCard = ({ perfume }: ProductCardProps) => {
             )}
             onClick={(e) => {
               e.preventDefault();
+              addToWishlist(perfume);
               setIsWishlisted(!isWishlisted);
             }}
           >
@@ -66,7 +69,9 @@ export const ProductCard = ({ perfume }: ProductCardProps) => {
         </Link>
 
         <div className="flex items-center justify-between mt-4">
-          <p className="text-xl font-semibold">₹{perfume.price.toLocaleString()}</p>
+          <p className="text-xl font-semibold">
+            ₹{perfume.price.toLocaleString()}
+          </p>
           <Button
             size="sm"
             className="gap-2"
