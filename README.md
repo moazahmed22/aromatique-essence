@@ -1,4 +1,5 @@
 #🧠 Project Overview
+
 ##Aromatique Fragrances is a boutique perfume brand offering premium handcrafted perfumes for men, women, and unisex audiences.
 
 ## Project info
