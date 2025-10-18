@@ -11,7 +11,9 @@ const Cart = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-heading font-bold mb-4">Your Cart is Empty</h1>
+          <h1 className="text-4xl font-heading font-bold mb-4">
+            Your Cart is Empty
+          </h1>
           <p className="text-muted-foreground mb-8">
             Discover our exquisite collection of fragrances
           </p>
@@ -35,26 +37,38 @@ const Cart = () => {
               <Card key={item.id} className="shadow-elegant">
                 <CardContent className="p-6">
                   <div className="flex gap-6">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-24 h-24 object-cover rounded-lg"
-                    />
+                    <Link to={`/product/${item.id}`}>
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-24 h-24 object-cover rounded-lg"
+                      />
+                    </Link>
+
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h3 className="font-heading font-semibold text-lg">
-                            {item.name}
-                          </h3>
+                          <Link to={`/product/${item.id}`}>
+                            <h3 className="font-heading font-semibold text-lg hover:text-primary">
+                              {item.name}
+                            </h3>
+                          </Link>
                           <p className="text-sm text-muted-foreground">
                             {item.category} • {item.volume}
                           </p>
                         </div>
-                        <p className="font-semibold text-lg">
-                          ₹{(item.price * item.quantity).toLocaleString()}
-                        </p>
+                        {/*  */}
+                        <div>
+                          <p className="font-semibold text-lg">
+                            ₹{(item.price * item.quantity).toLocaleString()}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            ₹{item.price.toLocaleString()}
+                          </p>
+                        </div>
                       </div>
 
+                      {/* control quantity */}
                       <div className="flex items-center justify-between mt-4">
                         <div className="flex items-center gap-2">
                           <Button
@@ -108,7 +122,9 @@ const Cart = () => {
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-semibold">₹{total.toLocaleString()}</span>
+                    <span className="font-semibold">
+                      ₹{total.toLocaleString()}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>

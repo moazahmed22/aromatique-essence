@@ -18,11 +18,12 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem("cart");
-    return saved ? JSON.parse(saved) : [];
-  });
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [items, setItems] = useState<CartItem[]>(
+    JSON.parse(localStorage.getItem("cart")) || []
+  );
 
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(items));
@@ -37,7 +38,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           description: `Increased quantity of ${perfume.name}`,
         });
         return prev.map((item) =>
-          item.id === perfume.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === perfume.id
+            ? { ...perfume, quantity: item.quantity + 1 }
+            : item
         );
       }
       toast({
@@ -74,11 +77,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
     <CartContext.Provider
-      value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, total }}
+      value={{
+        items,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        total,
+      }}
     >
       {children}
     </CartContext.Provider>
