@@ -1,13 +1,17 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { Search, ShoppingBag, User, Menu } from "lucide-react";
+import { useState } from "react";
+import { ShoppingBag, User, Menu, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCart } from "@/contexts/CartContext";
+import { SearchBar } from "@/components/SearchBar";
 import { Facebook, Instagram, Twitter, Mail } from "lucide-react";
 
 export const Layout = () => {
   const location = useLocation();
   const { items } = useCart();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -52,9 +56,20 @@ export const Layout = () => {
             <NavLinks />
           </nav>
 
+          {/* Desktop Search Bar */}
+          <div className="hidden md:block flex-1 max-w-md mx-6">
+            <SearchBar />
+          </div>
+
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="hidden md:flex">
+            {/* Mobile Search Button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden"
+              onClick={() => setIsSearchOpen(true)}
+            >
               <Search className="h-5 w-5" />
             </Button>
             <Link to="/cart">
@@ -87,6 +102,17 @@ export const Layout = () => {
           </div>
         </div>
       </header>
+
+      {/* Mobile Search Dialog */}
+      <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle>Search Perfumes</DialogTitle>
+          </DialogHeader>
+          <SearchBar onClose={() => setIsSearchOpen(false)} />
+        </DialogContent>
+      </Dialog>
+
       <Outlet />
       <footer className="bg-secondary text-secondary-foreground mt-20">
         <div className="container mx-auto px-4 py-12">

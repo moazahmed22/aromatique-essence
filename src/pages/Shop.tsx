@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,15 +10,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { perfumes, categories } from "@/data/perfumes";
+import { searchPerfumes } from "@/lib/search.util";
 
 const Shop = () => {
+  const [searchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("default");
+  const searchQuery = searchParams.get("query") || "";
 
-  // Filter by category
-  let filteredPerfumes = selectedCategory === "All" 
-    ? perfumes 
-    : perfumes.filter(p => p.category === selectedCategory);
+  // TODO: Replace with Supabase query when implementing backend
+  // Filter by search query first, then by category
+  let filteredPerfumes = searchQuery
+    ? searchPerfumes(perfumes, searchQuery, perfumes.length)
+    : selectedCategory === "All"
+    ? perfumes
+    : perfumes.filter((p) => p.category === selectedCategory);
+
+  // Reset category filter when search query is active
+  useEffect(() => {
+    if (searchQuery) {
+      setSelectedCategory("All");
+    }
+  }, [searchQuery]);
 
   // Sort perfumes
   if (sortBy === "price-low") {
@@ -34,10 +48,12 @@ const Shop = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4">
-            Shop Our Collection
+            {searchQuery ? `Search Results for "${searchQuery}"` : "Shop Our Collection"}
           </h1>
           <p className="text-muted-foreground text-lg">
-            Discover your perfect scent from our exquisite collection
+            {searchQuery
+              ? `Found ${filteredPerfumes.length} perfume${filteredPerfumes.length !== 1 ? "s" : ""}`
+              : "Discover your perfect scent from our exquisite collection"}
           </p>
         </div>
 
