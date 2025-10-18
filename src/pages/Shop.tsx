@@ -39,7 +39,9 @@ const Shop = () => {
   } else if (sortBy === "price-high") {
     filteredPerfumes = [...filteredPerfumes].sort((a, b) => b.price - a.price);
   } else if (sortBy === "rating") {
-    filteredPerfumes = [...filteredPerfumes].sort((a, b) => b.rating - a.rating);
+    filteredPerfumes = [...filteredPerfumes].sort(
+      (a, b) => b.rating - a.rating
+    );
   }
 
   return (
@@ -48,11 +50,15 @@ const Shop = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4">
-            {searchQuery ? `Search Results for "${searchQuery}"` : "Shop Our Collection"}
+            {searchQuery
+              ? `Search Results for "${searchQuery}"`
+              : "Shop Our Collection"}
           </h1>
           <p className="text-muted-foreground text-lg">
             {searchQuery
-              ? `Found ${filteredPerfumes.length} perfume${filteredPerfumes.length !== 1 ? "s" : ""}`
+              ? `Found ${filteredPerfumes.length} perfume${
+                  filteredPerfumes.length !== 1 ? "s" : ""
+                }`
               : "Discover your perfect scent from our exquisite collection"}
           </p>
         </div>

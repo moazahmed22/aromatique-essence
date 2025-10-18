@@ -3,7 +3,12 @@ import { useState } from "react";
 import { ShoppingBag, User, Menu, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useCart } from "@/contexts/CartContext";
 import { SearchBar } from "@/components/SearchBar";
 import { Facebook, Instagram, Twitter, Mail } from "lucide-react";
@@ -56,18 +61,11 @@ export const Layout = () => {
             <NavLinks />
           </nav>
 
-          {/* Desktop Search Bar */}
-          <div className="hidden md:block flex-1 max-w-md mx-6">
-            <SearchBar />
-          </div>
-
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {/* Mobile Search Button */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="md:hidden"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsSearchOpen(true)}
             >
               <Search className="h-5 w-5" />
@@ -82,7 +80,7 @@ export const Layout = () => {
                 )}
               </Button>
             </Link>
-            <Button variant="ghost" size="icon" className="hidden md:flex">
+            <Button variant="ghost" size="icon" className="flex">
               <User className="h-5 w-5" />
             </Button>
 
