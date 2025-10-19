@@ -15,6 +15,7 @@ export interface Perfume {
     base: string[];
   };
   volume: string;
+  stock: number; // TODO: Will be managed in Supabase inventory table
 }
 
 export const perfumes: Perfume[] = [
@@ -33,7 +34,8 @@ export const perfumes: Perfume[] = [
       middle: ["Oud Wood", "Rose"],
       base: ["Amber", "Vanilla", "Musk"]
     },
-    volume: "100ml"
+    volume: "100ml",
+    stock: 20
   },
   {
     id: 2,
@@ -50,7 +52,8 @@ export const perfumes: Perfume[] = [
       middle: ["Bulgarian Rose", "Peony"],
       base: ["White Musk", "Cashmere Wood"]
     },
-    volume: "100ml"
+    volume: "100ml",
+    stock: 15
   },
   {
     id: 3,
@@ -67,7 +70,8 @@ export const perfumes: Perfume[] = [
       middle: ["Leather", "Iris"],
       base: ["Vetiver", "Tobacco", "Patchouli"]
     },
-    volume: "100ml"
+    volume: "100ml",
+    stock: 18
   },
   {
     id: 4,
@@ -83,7 +87,8 @@ export const perfumes: Perfume[] = [
       middle: ["Jasmine", "White Tea"],
       base: ["Cedar", "Light Musk"]
     },
-    volume: "50ml"
+    volume: "50ml",
+    stock: 25
   },
   {
     id: 5,
@@ -98,7 +103,8 @@ export const perfumes: Perfume[] = [
       middle: ["Amber", "Jasmine"],
       base: ["Sandalwood", "Vanilla", "Benzoin"]
     },
-    volume: "100ml"
+    volume: "100ml",
+    stock: 12
   },
   {
     id: 6,
@@ -113,7 +119,8 @@ export const perfumes: Perfume[] = [
       middle: ["Marine Notes", "Sage"],
       base: ["Driftwood", "Amber"]
     },
-    volume: "50ml"
+    volume: "50ml",
+    stock: 30
   },
   {
     id: 7,
@@ -128,7 +135,8 @@ export const perfumes: Perfume[] = [
       middle: ["Night Jasmine", "Orange Blossom"],
       base: ["Tonka Bean", "Patchouli"]
     },
-    volume: "100ml"
+    volume: "100ml",
+    stock: 8
   },
   {
     id: 8,
@@ -143,7 +151,8 @@ export const perfumes: Perfume[] = [
       middle: ["Iris", "Lavender"],
       base: ["Sandalwood", "Cedarwood", "Musk"]
     },
-    volume: "100ml"
+    volume: "100ml",
+    stock: 22
   }
 ];
 

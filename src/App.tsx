@@ -15,6 +15,12 @@ import NotFound from "./pages/NotFound";
 import { WishlistProvider } from "./contexts/wishlistContext";
 import WishlistPage from "./pages/WishlistPage";
 import { Layout } from "./components/Layout/Layout";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminProducts from "./pages/admin/Products";
+import AdminCategories from "./pages/admin/Categories";
+import AdminOrders from "./pages/admin/Orders";
+import AdminCustomers from "./pages/admin/Customers";
+import AdminSettings from "./pages/admin/Settings";
 
 const queryClient = new QueryClient();
 const routes = createBrowserRouter([
@@ -31,6 +37,18 @@ const routes = createBrowserRouter([
       { path: "checkout", element: <Checkout /> },
       { path: "wishlist", element: <WishlistPage /> },
       { path: "*", element: <NotFound /> },
+    ],
+  },
+  // Admin routes - TODO: Add authentication guard before deploying
+  {
+    path: "/admin",
+    children: [
+      { index: true, element: <AdminDashboard /> },
+      { path: "products", element: <AdminProducts /> },
+      { path: "categories", element: <AdminCategories /> },
+      { path: "orders", element: <AdminOrders /> },
+      { path: "customers", element: <AdminCustomers /> },
+      { path: "settings", element: <AdminSettings /> },
     ],
   },
 ]);
