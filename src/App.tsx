@@ -21,6 +21,7 @@ import AdminCategories from "./pages/admin/Categories";
 import AdminOrders from "./pages/admin/Orders";
 import AdminCustomers from "./pages/admin/Customers";
 import AdminSettings from "./pages/admin/Settings";
+import { AdminLayout } from "./components/admin/AdminLayout";
 
 const queryClient = new QueryClient();
 const routes = createBrowserRouter([
@@ -42,6 +43,7 @@ const routes = createBrowserRouter([
   // Admin routes - TODO: Add authentication guard before deploying
   {
     path: "/admin",
+    element: <AdminLayout />,
     children: [
       { index: true, element: <AdminDashboard /> },
       { path: "products", element: <AdminProducts /> },

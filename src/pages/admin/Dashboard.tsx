@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, ShoppingCart, Users, Package } from 'lucide-react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import {
   ChartContainer,
   ChartTooltip,
@@ -40,7 +39,6 @@ const chartConfig = {
 
 export default function Dashboard() {
   return (
-    <AdminLayout>
       <div className="space-y-6">
         {/* Page Header */}
         <div>
@@ -134,6 +132,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+
   );
 }
