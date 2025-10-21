@@ -1,6 +1,6 @@
-import { Bell, Moon, Sun, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Bell, Moon, Sun, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,30 +8,28 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useState, useEffect } from 'react';
+} from "@/components/ui/dropdown-menu";
+import { useState, useEffect } from "react";
 
 export const Topbar = () => {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    const theme = localStorage.getItem('theme');
-    setIsDark(theme === 'dark');
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
+    const theme = localStorage.getItem("theme");
+    setIsDark(theme === "dark");
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
     }
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = !isDark;
-    setIsDark(newTheme);
-    
-    if (newTheme) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+    setIsDark(!isDark);
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
     } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
     }
   };
 
@@ -39,11 +37,7 @@ export const Topbar = () => {
     <header className="h-16 border-b border-border bg-background flex items-center justify-between px-6">
       {/* Search */}
       <div className="flex-1 max-w-md">
-        <Input
-          type="search"
-          placeholder="Search..."
-          className="w-full"
-        />
+        <Input type="search" placeholder="Search..." className="w-full" />
       </div>
 
       {/* Actions */}
@@ -72,13 +66,17 @@ export const Topbar = () => {
             <DropdownMenuItem>
               <div className="flex flex-col gap-1">
                 <p className="font-medium">New order received</p>
-                <p className="text-sm text-muted-foreground">Order #1005 from Layla Ibrahim</p>
+                <p className="text-sm text-muted-foreground">
+                  Order #1005 from Layla Ibrahim
+                </p>
               </div>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <div className="flex flex-col gap-1">
                 <p className="font-medium">Low stock alert</p>
-                <p className="text-sm text-muted-foreground">Velvet Rose has only 5 units left</p>
+                <p className="text-sm text-muted-foreground">
+                  Velvet Rose has only 5 units left
+                </p>
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
