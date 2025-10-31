@@ -8,10 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { categories } from "@/data/perfumes";
+
 import { useWishlist } from "@/contexts/wishlistContext";
 
 const WishlistPage = () => {
+  const categories = ["All", "Men", "Women", "Unisex"] as const;
+
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("default");
   const { items: wishlistedPerfumes } = useWishlist();

@@ -28,8 +28,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { perfumes } from "@/data/perfumes";
 import { useToast } from "@/hooks/use-toast";
+import { Perfume } from "@/types/Perfumes.type";
+import { useProducts } from "@/lib/products.util";
 
 // TODO: Replace static perfumes array with Supabase query
 // const { data: products } = await supabase.from('products').select('*')
@@ -38,12 +39,13 @@ export default function Products() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { data: perfumes }: { data: Perfume[] } = useProducts();
 
   // Filter products based on search
   const filteredProducts = perfumes.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase())
+      product.category_slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleAddProduct = () => {
@@ -176,7 +178,7 @@ export default function Products() {
                   />
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.category}</TableCell>
+                <TableCell>{product.category_slug}</TableCell>
                 <TableCell>AED {product.price.toLocaleString()}</TableCell>
                 <TableCell>
                   <span

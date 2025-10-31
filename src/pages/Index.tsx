@@ -4,17 +4,35 @@ import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ProductCard";
 import { Newsletter } from "@/components/Newsletter";
 import { Card, CardContent } from "@/components/ui/card";
-import { getFeaturedPerfumes, getBestsellers } from "@/data/perfumes";
 import { testimonials } from "@/data/testimonials";
 
+import {
+  getBestsellers,
+  getFeaturedPerfumes,
+  useProducts,
+} from "@/lib/products.util";
+import { useEffect, useState } from "react";
+import { Perfume } from "@/types/Perfumes.type";
+
 const Index = () => {
-  const featured = getFeaturedPerfumes();
-  const bestsellers = getBestsellers();
+  const [perfumes, setPerfumes] = useState<Perfume[]>([]);
+  const {
+    data: allPerfumes,
+    isLoading,
+  }: { data: Perfume[]; isLoading: boolean } = useProducts();
+  const featured = getFeaturedPerfumes(perfumes);
+  const bestsellers = getBestsellers(perfumes);
+
+  useEffect(() => {
+    if (allPerfumes) {
+      setPerfumes(allPerfumes);
+    }
+  }, [allPerfumes]);
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section 
+      <section
         className="relative h-[600px] bg-cover bg-center flex items-center justify-center"
         style={{ backgroundImage: "url('/images/hero-banner.jpg')" }}
       >
@@ -27,7 +45,10 @@ const Index = () => {
             Discover the art of luxury fragrances crafted with passion
           </p>
           <Link to="/shop">
-            <Button size="lg" className="gap-2 text-lg px-8 py-6 bg-primary hover:bg-accent">
+            <Button
+              size="lg"
+              className="gap-2 text-lg px-8 py-6 bg-primary hover:bg-accent"
+            >
               Shop Now
               <ArrowRight className="h-5 w-5" />
             </Button>
@@ -46,7 +67,12 @@ const Index = () => {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featured.map((perfume) => (
+          {isLoading && (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground text-lg">Loading...</p>
+            </div>
+          )}
+          {featured?.map((perfume) => (
             <ProductCard key={perfume.id} perfume={perfume} />
           ))}
         </div>
@@ -64,7 +90,12 @@ const Index = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {bestsellers.map((perfume) => (
+            {isLoading && (
+              <div className="text-center py-20">
+                <p className="text-muted-foreground text-lg">Loading...</p>
+              </div>
+            )}
+            {bestsellers?.map((perfume) => (
               <ProductCard key={perfume.id} perfume={perfume} />
             ))}
           </div>
@@ -84,7 +115,9 @@ const Index = () => {
               <CardContent className="pt-6">
                 <div className="flex gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <span key={i} className="text-primary text-xl">★</span>
+                    <span key={i} className="text-primary text-xl">
+                      ★
+                    </span>
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4 italic">
@@ -92,7 +125,9 @@ const Index = () => {
                 </p>
                 <div>
                   <p className="font-semibold">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">{testimonial.location}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {testimonial.location}
+                  </p>
                 </div>
               </CardContent>
             </Card>

@@ -53,8 +53,8 @@ const Cart = () => {
                               {item.name}
                             </h3>
                           </Link>
-                          <p className="text-sm text-muted-foreground">
-                            {item.category} • {item.volume}
+                          <p className="text-sm text-muted-foreground capitalize">
+                            {item.category_slug} • {item.volume}
                           </p>
                         </div>
                         {/*  */}

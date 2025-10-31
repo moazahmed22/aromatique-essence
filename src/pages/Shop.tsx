@@ -9,40 +9,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { perfumes, categories } from "@/data/perfumes";
 import { searchPerfumes } from "@/lib/search.util";
+import { useProducts } from "@/lib/products.util";
+import { Perfume } from "@/types/Perfumes.type";
 
 const Shop = () => {
+  const categories = ["All", "Men", "Women", "Unisex"] as const;
+
   const [searchParams] = useSearchParams();
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("default");
   const searchQuery = searchParams.get("query") || "";
+  const { data: perfumes, isLoading }: { data: Perfume[]; isLoading: boolean } =
+    useProducts();
+  const [filteredPerfumes, setFilteredPerfumes] = useState<Perfume[] | null>();
 
-  // TODO: Replace with Supabase query when implementing backend
-  // Filter by search query first, then by category
-  let filteredPerfumes = searchQuery
-    ? searchPerfumes(perfumes, searchQuery, perfumes.length)
-    : selectedCategory === "All"
-    ? perfumes
-    : perfumes.filter((p) => p.category === selectedCategory);
+  // Filter and sort perfumes
+  useEffect(() => {
+    let filtered = perfumes;
+
+    // Filter by search
+    if (searchQuery) {
+      filtered = searchPerfumes(perfumes, searchQuery, perfumes.length);
+    }
+    // Filter by category
+    else if (selectedCategory !== "all") {
+      filtered = perfumes?.filter((p) => p.category_slug === selectedCategory);
+    }
+
+    // Sort by selected option
+    if (sortBy === "price-low") {
+      filtered = [...filtered].sort((a, b) => a.price - b.price);
+    } else if (sortBy === "price-high") {
+      filtered = [...filtered].sort((a, b) => b.price - a.price);
+    } else if (sortBy === "rating") {
+      filtered = [...filtered].sort((a, b) => b.rating - a.rating);
+    }
+
+    setFilteredPerfumes(filtered);
+  }, [perfumes, searchQuery, selectedCategory, sortBy]);
 
   // Reset category filter when search query is active
   useEffect(() => {
     if (searchQuery) {
-      setSelectedCategory("All");
+      setSelectedCategory("all");
     }
   }, [searchQuery]);
-
-  // Sort perfumes
-  if (sortBy === "price-low") {
-    filteredPerfumes = [...filteredPerfumes].sort((a, b) => a.price - b.price);
-  } else if (sortBy === "price-high") {
-    filteredPerfumes = [...filteredPerfumes].sort((a, b) => b.price - a.price);
-  } else if (sortBy === "rating") {
-    filteredPerfumes = [...filteredPerfumes].sort(
-      (a, b) => b.rating - a.rating
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,8 +68,8 @@ const Shop = () => {
           </h1>
           <p className="text-muted-foreground text-lg">
             {searchQuery
-              ? `Found ${filteredPerfumes.length} perfume${
-                  filteredPerfumes.length !== 1 ? "s" : ""
+              ? `Found ${filteredPerfumes?.length} perfume${
+                  filteredPerfumes?.length !== 1 ? "s" : ""
                 }`
               : "Discover your perfect scent from our exquisite collection"}
           </p>
@@ -70,8 +82,14 @@ const Shop = () => {
             {categories.map((category) => (
               <Button
                 key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                onClick={() => setSelectedCategory(category)}
+                variant={
+                  selectedCategory === category.toLocaleLowerCase()
+                    ? "default"
+                    : "outline"
+                }
+                onClick={() =>
+                  setSelectedCategory(category.toLocaleLowerCase())
+                }
               >
                 {category}
               </Button>
@@ -94,12 +112,16 @@ const Shop = () => {
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredPerfumes.map((perfume) => (
+          {filteredPerfumes?.map((perfume) => (
             <ProductCard key={perfume.id} perfume={perfume} />
           ))}
         </div>
-
-        {filteredPerfumes.length === 0 && (
+        {isLoading && (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground text-lg">Loading...</p>
+          </div>
+        )}
+        {filteredPerfumes?.length === 0 && (
           <div className="text-center py-20">
             <p className="text-muted-foreground text-lg">
               No perfumes found in this category

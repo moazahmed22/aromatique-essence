@@ -4,22 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/ProductCard";
-import { perfumes } from "@/data/perfumes";
 import { useCart } from "@/contexts/CartContext";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import { useWishlist } from "@/contexts/wishlistContext";
+import { useProducts } from "@/lib/products.util";
+import { Perfume } from "@/types/Perfumes.type";
+import { cn } from "@/lib/utils";
 
 const ProductDetails = () => {
   const { id } = useParams();
   const { addToCart } = useCart();
   const { items, addToWishlist } = useWishlist();
 
-  // TODO: Replace with Supabase query
-  const perfume = perfumes.find((p) => p.id === Number(id));
+  const { data: perfumes, isLoading }: { data: Perfume[]; isLoading: boolean } =
+    useProducts();
 
+  // TODO: Replace with Supabase query
+  const perfume = perfumes?.find((p) => p.id === Number(id));
   const [isWishlisted, setIsWishlisted] = useState(
-    items.some((item) => item.id === perfume.id)
+    items.some((item) => item?.id === perfume?.id)
   );
 
   if (!perfume) {
@@ -37,9 +40,11 @@ const ProductDetails = () => {
     );
   }
 
-  // Get related products (same category, different ID)
+  // Get related products (same category_slug, different ID)
   const relatedProducts = perfumes
-    .filter((p) => p.category === perfume.category && p.id !== perfume.id)
+    ?.filter(
+      (p) => p.category_slug === perfume.category_slug && p.id !== perfume.id
+    )
     .slice(0, 4);
 
   return (
@@ -64,7 +69,7 @@ const ProductDetails = () => {
           {/* Details */}
           <div className="flex flex-col justify-center">
             <Badge variant="outline" className="w-fit mb-4">
-              {perfume.category}
+              {perfume.category_slug}
             </Badge>
             <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4">
               {perfume.name}
@@ -102,19 +107,19 @@ const ProductDetails = () => {
                   <div>
                     <span className="font-medium text-sm">Top Notes:</span>
                     <p className="text-muted-foreground">
-                      {perfume.notes.top.join(", ")}
+                      {perfume?.notes_top.join(", ")}
                     </p>
                   </div>
                   <div>
                     <span className="font-medium text-sm">Middle Notes:</span>
                     <p className="text-muted-foreground">
-                      {perfume.notes.middle.join(", ")}
+                      {perfume?.notes_middle.join(", ")}
                     </p>
                   </div>
                   <div>
                     <span className="font-medium text-sm">Base Notes:</span>
                     <p className="text-muted-foreground">
-                      {perfume.notes.base.join(", ")}
+                      {perfume?.notes_base.join(", ")}
                     </p>
                   </div>
                 </div>
