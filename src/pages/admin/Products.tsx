@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader, Target } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -31,31 +31,114 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Perfume } from "@/types/Perfumes.type";
 import { useProducts } from "@/lib/products.util";
+import { supabase } from "@/lib/supabase.util";
+import { add } from "date-fns";
 
 // TODO: Replace static perfumes array with Supabase query
 // const { data: products } = await supabase.from('products').select('*')
+type addProductFromType = {
+  name: string;
+  price: number | string;
+  stockQuantity: number | string;
+  category_slug: string;
+  description: string;
+  image?: File | string;
+};
 
 export default function Products() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [addProductFromData, setAddProductFromData] =
+    useState<addProductFromType>({
+      name: "",
+      price: "",
+      stockQuantity: "",
+      category_slug: "",
+      description: "",
+    });
   const { toast } = useToast();
-  const { data: perfumes }: { data: Perfume[] } = useProducts();
+  const { data: perfumes, isLoading }: { data: Perfume[]; isLoading: boolean } =
+    useProducts();
 
   // Filter products based on search
-  const filteredProducts = perfumes.filter(
+  const filteredProducts = perfumes?.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category_slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddProduct = () => {
-    // TODO: Implement Supabase insert
-    // await supabase.from('products').insert([newProduct])
-    toast({
-      title: "Product added",
-      description: "New product has been added successfully.",
-    });
-    setIsDialogOpen(false);
+  const handleAddProduct = async () => {
+    try {
+      let imageURL: string | null = null;
+
+      // Upload image if selected
+      if (
+        addProductFromData.image &&
+        addProductFromData.image instanceof File
+      ) {
+        const file = addProductFromData.image;
+        const fileName = `${file.name}`;
+        const { data: uploadedImage, error: uploadError } =
+          await supabase.storage.from("images").upload(fileName, file);
+
+        if (uploadError) {
+          console.log(uploadError);
+
+          toast({
+            title: "Image upload failed",
+            description: "We'll use the default placeholder image instead.",
+          });
+        } else {
+          const { data: URL } = supabase.storage
+            .from("images")
+            .getPublicUrl(uploadedImage.path);
+          imageURL = URL.publicUrl;
+        }
+      }
+
+      // 🧹 Prepare clean object for Supabase
+      const productToInsert = {
+        name: addProductFromData.name.trim(),
+        price: addProductFromData.price,
+        stock: addProductFromData.stockQuantity,
+        category_slug: addProductFromData.category_slug,
+        description: addProductFromData.description.trim(),
+        // spread the returned image value either as a string or undefined
+        ...(imageURL ? { image: imageURL } : {}),
+      };
+
+      // 🪄 Insert into Supabase
+      setTimeout(async () => {
+        const { data, error } = await supabase
+          .from("perfumes")
+          .insert([productToInsert])
+          .select();
+
+        if (error) throw error;
+
+        toast({
+          title: "Product added",
+          description: "New product has been added successfully.",
+        });
+
+        // ✅ Reset form & close dialog
+        setAddProductFromData({
+          name: "",
+          price: "",
+          stockQuantity: "",
+          category_slug: "",
+          description: "",
+        });
+        setIsDialogOpen(false);
+      }, 2000);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Failed to add product",
+        description: "Please check your network or try again later.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteProduct = (id: number) => {
@@ -94,23 +177,71 @@ export default function Products() {
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="name">Product Name</Label>
-                <Input id="name" placeholder="e.g., Golden Oud" />
+                <Input
+                  id="name"
+                  placeholder="e.g., Golden Oud"
+                  required
+                  value={addProductFromData.name}
+                  onChange={(e) =>
+                    setAddProductFromData({
+                      ...addProductFromData,
+                      name: e.target.value,
+                    })
+                  }
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="price">Price (AED)</Label>
-                  <Input id="price" type="number" placeholder="2500" />
+                  <Input
+                    id="price"
+                    type="number"
+                    placeholder="2500"
+                    required
+                    value={addProductFromData.price}
+                    onChange={(e) =>
+                      setAddProductFromData({
+                        ...addProductFromData,
+                        price: e.target.value,
+                      })
+                    }
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="stock">Stock Quantity</Label>
-                  <Input id="stock" type="number" placeholder="20" />
+                  <Input
+                    id="stock"
+                    type="number"
+                    placeholder="20"
+                    required
+                    value={addProductFromData.stockQuantity}
+                    onChange={(e) =>
+                      setAddProductFromData({
+                        ...addProductFromData,
+                        stockQuantity: e.target.value,
+                      })
+                    }
+                  />
                 </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="category">Category</Label>
-                <Select>
+                <Select
+                  value={addProductFromData.category_slug}
+                  onValueChange={(e) =>
+                    setAddProductFromData({
+                      ...addProductFromData,
+                      category_slug: e,
+                    })
+                  }
+                  required
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue
+                      placeholder={`${
+                        addProductFromData.category_slug || "Select category"
+                      }`}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="men">Men</SelectItem>
@@ -124,11 +255,32 @@ export default function Products() {
                 <Textarea
                   id="description"
                   placeholder="Enter product description..."
+                  required
+                  value={addProductFromData.description}
+                  onChange={(e) =>
+                    setAddProductFromData({
+                      ...addProductFromData,
+                      description: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="image">Image URL</Label>
-                <Input id="image" placeholder="/images/product.png" />
+                {/* upload image first */}
+                <Input
+                  id="image"
+                  type="file"
+                  placeholder="/images/product.png"
+                  required
+                  // value={addProductFromData.imageURL}
+                  onChange={(e) =>
+                    setAddProductFromData({
+                      ...addProductFromData,
+                      image: e.target.files[0],
+                    })
+                  }
+                />
               </div>
             </div>
             <DialogFooter>
@@ -168,41 +320,49 @@ export default function Products() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProducts.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell>
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-12 h-12 object-cover rounded"
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.category_slug}</TableCell>
-                <TableCell>AED {product.price.toLocaleString()}</TableCell>
-                <TableCell>
-                  <span
-                    className={product.stock < 10 ? "text-destructive" : ""}
-                  >
-                    {product.stock} units
-                  </span>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon">
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteProduct(product.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  <p className="text-muted-foreground">Loading...</p>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredProducts?.map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell>
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-12 h-12 object-cover rounded"
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell>{product.category_slug}</TableCell>
+                  <TableCell>AED {product.price.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <span
+                      className={product.stock < 10 ? "text-destructive" : ""}
+                    >
+                      {product.stock} units
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteProduct(product.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

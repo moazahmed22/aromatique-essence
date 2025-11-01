@@ -62,7 +62,7 @@ export default function Categories() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled>
               <Plus className="w-4 h-4 mr-2" />
               Add Category
             </Button>
@@ -134,6 +134,7 @@ export default function Categories() {
                       <Pencil className="w-4 h-4" />
                     </Button>
                     <Button
+                      disabled
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteCategory(category.id)}
