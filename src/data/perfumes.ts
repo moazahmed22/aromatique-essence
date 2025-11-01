@@ -1,6 +1,6 @@
-// // TODO: Replace static data with Supabase query in the future
+// TODO: Replace static data with Supabase query in the future
 
-// import { Perfume } from "@/types/Perfumes.type";
+export type { Perfume } from "@/types/Perfumes.type";
 
 // export const perfumes: Perfume[] = [
 //   {

@@ -12,6 +12,7 @@ import Contact from "./pages/Contact";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
 import { WishlistProvider } from "./contexts/wishlistContext";
 import WishlistPage from "./pages/WishlistPage";
 import { Layout } from "./components/Layout/Layout";
@@ -38,6 +39,7 @@ const routes = createBrowserRouter([
       { path: "cart", element: <Cart /> },
       { path: "checkout", element: <Checkout /> },
       { path: "wishlist", element: <WishlistPage /> },
+      { path: "auth", element: <Auth /> },
       { path: "*", element: <NotFound /> },
     ],
   },

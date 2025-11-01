@@ -22,7 +22,7 @@ const WishlistPage = () => {
   let filteredPerfumes =
     selectedCategory === "All"
       ? wishlistedPerfumes
-      : wishlistedPerfumes.filter((p) => p.category === selectedCategory);
+      : wishlistedPerfumes.filter((p) => p.category_slug === selectedCategory);
 
   // Sort perfumes
   if (sortBy === "price-low") {

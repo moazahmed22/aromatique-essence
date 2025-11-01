@@ -116,7 +116,7 @@ export const SearchBar = ({ className, onClose }: SearchBarProps) => {
                         {perfume.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {perfume.category}
+                        {perfume.category_slug}
                       </p>
                     </div>
                     <p className="font-semibold text-sm text-primary">
