@@ -3,11 +3,11 @@ import { Heart, ShoppingBag, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Perfume } from "@/data/perfumes";
 import { useCart } from "@/contexts/CartContext";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useWishlist } from "@/contexts/wishlistContext";
+import { Perfume } from "@/types/Perfumes.type";
 
 interface ProductCardProps {
   perfume: Perfume;
@@ -16,7 +16,9 @@ interface ProductCardProps {
 export const ProductCard = ({ perfume }: ProductCardProps) => {
   const { addToCart } = useCart();
   const { items, addToWishlist } = useWishlist();
-  const [isWishlisted, setIsWishlisted] = useState(items.some((item)=> item.id === perfume.id));
+  const [isWishlisted, setIsWishlisted] = useState(
+    items.some((item) => item.id === perfume.id)
+  );
 
   return (
     <Card className="group overflow-hidden transition-all hover:shadow-luxury">
@@ -53,8 +55,8 @@ export const ProductCard = ({ perfume }: ProductCardProps) => {
       <CardContent className="p-4">
         <Link to={`/product/${perfume.id}`}>
           <div className="mb-2">
-            <Badge variant="outline" className="mb-2">
-              {perfume.category}
+            <Badge variant="outline" className="mb-2 capitalize">
+              {perfume.category_slug}
             </Badge>
             <h3 className="font-heading text-lg font-semibold group-hover:text-primary transition-colors">
               {perfume.name}

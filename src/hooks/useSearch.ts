@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
-import { perfumes, Perfume } from "@/data/perfumes";
 import { searchPerfumes } from "@/lib/search.util";
+import { Perfume } from "@/types/Perfumes.type";
+import { useProducts } from "@/lib/products.util";
 
 export const useSearch = (debounceMs: number = 300) => {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState<Perfume[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const { data: perfumes }: { data: Perfume[] } = useProducts();
 
   // Debounce search input
   useEffect(() => {

@@ -25,6 +25,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { set } from "date-fns";
 
 export const Layout = () => {
   const location = useLocation();
@@ -59,24 +60,20 @@ export const Layout = () => {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   // handle color theme
-  const [isDark, setIsDark] = useState(false);
-
   useEffect(() => {
-    const theme = localStorage.getItem("theme");
-    setIsDark(theme === "dark");
+    const theme = localStorage.getItem("theme") || "light";
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
     }
   }, []);
 
   const toggleTheme = () => {
-    setIsDark(!isDark);
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
+    if (localStorage.getItem("theme") === "dark") {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
     }
   };
 
@@ -136,7 +133,7 @@ export const Layout = () => {
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="hover:!bg-red-300 hover:!text-red-600 hover:font-bold">
+                <DropdownMenuItem className="hover:!bg-red-300 hover:!text-red-600 hover:font-bold cursor-pointer">
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>

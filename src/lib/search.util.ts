@@ -1,4 +1,4 @@
-import { Perfume } from "@/data/perfumes";
+import { Perfume } from "@/types/Perfumes.type";
 
 /**
  * 🔍 Search utility function - currently filters static data
@@ -21,7 +21,7 @@ export const searchPerfumes = (
   return perfumes
     .filter((perfume) => {
       const matchesName = perfume.name.toLowerCase().includes(normalizedQuery);
-      const matchesCategory = perfume.category
+      const matchesCategory = perfume.category_slug
         .toLowerCase()
         .includes(normalizedQuery);
       const matchesDescription = perfume.description

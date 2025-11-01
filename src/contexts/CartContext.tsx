@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Perfume } from "@/data/perfumes";
 import { toast } from "@/hooks/use-toast";
+import { Perfume } from "@/types/Perfumes.type";
 
 // TODO: Replace local storage with Supabase cart table in the future
 interface CartItem extends Perfume {

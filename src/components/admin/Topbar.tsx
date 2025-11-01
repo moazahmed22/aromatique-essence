@@ -12,24 +12,26 @@ import {
 import { useState, useEffect } from "react";
 
 export const Topbar = () => {
+  // handle theme
   const [isDark, setIsDark] = useState(false);
 
+  // handle color theme
   useEffect(() => {
-    const theme = localStorage.getItem("theme");
-    setIsDark(theme === "dark");
+    const theme = localStorage.getItem("theme") || "light";
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
     }
   }, []);
 
   const toggleTheme = () => {
-    setIsDark(!isDark);
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
+    if (localStorage.getItem("theme") === "dark") {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+      setIsDark(true);
     }
   };
 

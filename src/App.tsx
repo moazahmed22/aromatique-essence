@@ -22,6 +22,7 @@ import AdminOrders from "./pages/admin/Orders";
 import AdminCustomers from "./pages/admin/Customers";
 import AdminSettings from "./pages/admin/Settings";
 import { AdminLayout } from "./components/admin/AdminLayout";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const queryClient = new QueryClient();
 const routes = createBrowserRouter([
@@ -71,6 +72,7 @@ const App = () => (
         </WishlistProvider>
       </CartProvider>
     </TooltipProvider>
+    <ReactQueryDevtools initialIsOpen={false} />
   </QueryClientProvider>
 );
 
