@@ -31,6 +31,11 @@ const Shop = () => {
     // Filter by search
     if (searchQuery) {
       filtered = searchPerfumes(perfumes, searchQuery, perfumes.length);
+      if (selectedCategory !== "all") {
+        filtered = filtered?.filter(
+          (p) => p.category_slug === selectedCategory
+        );
+      }
     }
     // Filter by category
     else if (selectedCategory !== "all") {
