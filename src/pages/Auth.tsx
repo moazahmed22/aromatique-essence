@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase.util";
+import { registerUser, loginUser, hasDashboardAccess } from "@/lib/auth.util";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Validation schemas
 const loginSchema = z.object({
@@ -49,34 +50,20 @@ type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function Auth() {
   const navigate = useNavigate();
+  const { user, setUser } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [isLoading, setIsLoading] = useState(false);
 
-  //  Replace with Supabase auth state listener
-  // Check if user is already logged in
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/");
-      }
-    };
-    checkSession();
-
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate("/");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+  // Redirect if already logged in
+  if (user) {
+    // Redirect based on role
+    if (hasDashboardAccess(user)) {
+      navigate("/admin");
+    } else {
+      navigate("/");
+    }
+    return null;
+  }
 
   // Login form
   const loginForm = useForm<LoginFormData>({
@@ -98,112 +85,82 @@ export default function Auth() {
     },
   });
 
-  //  Implement Supabase login
+  // Handle login with custom authentication
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
-    try {
-      //  Replace with actual Supabase auth.signInWithPassword
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
 
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          toast({
-            variant: "destructive",
-            title: "Login failed",
-            description: "Invalid email or password. Please try again.",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Login failed",
-            description: error.message,
-          });
-        }
+    try {
+      const { success, user: loggedInUser, error } = await loginUser(data.email, data.password);
+
+      if (!success || !loggedInUser) {
+        toast({
+          title: "Login Failed",
+          description: error || "Invalid credentials",
+          variant: "destructive",
+        });
         return;
       }
 
-      if (authData.user) {
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
-        });
+      // Update auth context
+      setUser(loggedInUser);
+
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
+
+      // Redirect based on role
+      if (hasDashboardAccess(loggedInUser)) {
+        navigate("/admin");
+      } else {
         navigate("/");
       }
     } catch (error) {
       toast({
-        variant: "destructive",
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  //  Implement Supabase signup
+  // Handle signup with custom authentication
   const handleSignup = async (data: SignupFormData) => {
     setIsLoading(true);
+
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      // Register as customer by default
+      const { success, user: newUser, error } = await registerUser(
+        data.name,
+        data.email,
+        data.password,
+        'customer'
+      );
 
-      //  Replace with actual Supabase auth.signUp
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            full_name: data.name,
-          },
-        },
-      });
-
-      if (error) {
-        console.log(error);
-
+      if (!success || !newUser) {
         toast({
+          title: "Signup Failed",
+          description: error || "Failed to create account",
           variant: "destructive",
-          title: "Signup failed",
-          description: error.message,
         });
-        // if (error.message.includes("already registered")) {
-        //   toast({
-        //     variant: "destructive",
-        //     title: "Signup failed",
-        //     description:
-        //       "This email is already registered. Please try logging in instead.",
-        //   });
-        //   setActiveTab("login");
-        // } else {
-        //   toast({
-        //     variant: "destructive",
-        //     title: "Signup failed",
-        //     description: error.message,
-        //   });
-        // }
         return;
       }
 
-      if (authData.user) {
-        toast({
-          title: "Account created!",
-          description: "Please check your email to confirm your account.",
-        });
-        setActiveTab("login");
-        //  After enabling email confirmation in Supabase, users will need to verify
-        // For now, if email confirmation is disabled, redirect to home
-        if (authData.session) {
-          navigate("/");
-        }
-      }
+      toast({
+        title: "Account Created!",
+        description: "You can now log in with your credentials.",
+      });
+
+      // Switch to login tab
+      setActiveTab("login");
+      signupForm.reset();
     } catch (error) {
       toast({
-        variant: "destructive",
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);

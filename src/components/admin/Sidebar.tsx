@@ -1,14 +1,15 @@
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  FolderTree, 
-  ShoppingCart, 
-  Users, 
-  Settings, 
-  LogOut 
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Package,
+  FolderTree,
+  ShoppingCart,
+  Users,
+  Settings,
+  LogOut,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -21,11 +22,12 @@ const navItems = [
 
 export const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    // TODO: Implement Supabase logout
-    // await supabase.auth.signOut();
-    console.log('Logout clicked');
+    logout();
+    navigate("/auth");
   };
 
   return (
