@@ -122,9 +122,11 @@ export const Layout = () => {
               <DropdownMenuContent className="w-56" align="end">
                 {/* <DropdownMenuLabel>My Account</DropdownMenuLabel> */}
                 <DropdownMenuGroup>
-                  <DropdownMenuItem className="cursor-pointer">
-                    Login & Signup
-                  </DropdownMenuItem>
+                  <Link to="/Auth">
+                    <DropdownMenuItem className="cursor-pointer">
+                      Login & Signup
+                    </DropdownMenuItem>
+                  </Link>
                   <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={toggleTheme}
