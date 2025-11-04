@@ -90,7 +90,11 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      const { success, user: loggedInUser, error } = await loginUser(data.email, data.password);
+      const {
+        success,
+        user: loggedInUser,
+        error,
+      } = await loginUser(data.email, data.password);
 
       if (!success || !loggedInUser) {
         toast({
@@ -132,12 +136,11 @@ export default function Auth() {
 
     try {
       // Register as customer by default
-      const { success, user: newUser, error } = await registerUser(
-        data.name,
-        data.email,
-        data.password,
-        'customer'
-      );
+      const {
+        success,
+        user: newUser,
+        error,
+      } = await registerUser(data.name, data.email, data.password, "customer");
 
       if (!success || !newUser) {
         toast({
