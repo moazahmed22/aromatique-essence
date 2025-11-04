@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
-import { hasDashboardAccess } from "@/lib/auth.util";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export const Layout = () => {
@@ -35,20 +35,15 @@ export const Layout = () => {
   const isActive = (path: string) => location.pathname === path;
 
   // Handle logout
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (!user) return "U";
-    return user.name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    if (!user || !user.email) return "U";
+    return user.email.slice(0, 2).toUpperCase();
   };
 
   const navLinks = [
@@ -144,7 +139,6 @@ export const Layout = () => {
                 <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.name}</p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user.email}
                       </p>
@@ -152,14 +146,12 @@ export const Layout = () => {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    {hasDashboardAccess(user) && (
-                      <Link to="/admin">
-                        <DropdownMenuItem className="cursor-pointer">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          Dashboard
-                        </DropdownMenuItem>
-                      </Link>
-                    )}
+                    <Link to="/admin">
+                      <DropdownMenuItem className="cursor-pointer">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </DropdownMenuItem>
+                    </Link>
                     <DropdownMenuItem
                       className="cursor-pointer"
                       onClick={toggleTheme}

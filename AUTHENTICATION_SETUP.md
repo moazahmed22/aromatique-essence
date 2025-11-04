@@ -1,175 +1,177 @@
-# Custom Authentication Setup Guide
+# Supabase Authentication Setup
 
-This project uses a **custom authentication system** built on Supabase tables instead of Supabase Auth. This provides more control over user management and role-based access.
+This application uses **Supabase Authentication** for user management. All authentication, password management, and sessions are handled by Supabase's built-in `auth.users` system.
 
-## 🔧 Database Setup Required
+## Setup Instructions
 
-You need to set up the following tables and policies in your Supabase project. You can run these SQL commands in the Supabase SQL Editor:
+### 1. Supabase Configuration
 
-### 1. Create Users Table
+Ensure your Supabase project is properly configured with the following environment variables in your `.env` file:
 
-```sql
--- Create users table (stores basic user information)
-create table public.users (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  email text unique not null,
-  password text not null,
-  created_at timestamp default now(),
-  updated_at timestamp default now()
-);
-
--- Enable Row Level Security
-alter table public.users enable row level security;
-
--- Create index for faster email lookups
-create index users_email_idx on public.users(email);
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_KEY=your_supabase_anon_key
 ```
 
-### 2. Create Role Enum
+### 2. Authentication Flow
 
-```sql
--- Create enum for user roles
-create type public.app_role as enum ('owner', 'staff', 'customer');
-```
+The app uses the following Supabase Auth methods:
 
-### 3. Create User Roles Table
+- **Login**: `supabase.auth.signInWithPassword({ email, password })`
+- **Sign Up**: `supabase.auth.signUp({ email, password })`
+- **Session Management**: `supabase.auth.getSession()`
+- **Sign Out**: `supabase.auth.signOut()`
 
-```sql
--- Create user_roles table (stores role assignments)
-create table public.user_roles (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references public.users(id) on delete cascade not null,
-  role app_role not null,
-  unique (user_id, role)
-);
+### 3. Protected Routes
 
--- Enable Row Level Security
-alter table public.user_roles enable row level security;
+All admin/dashboard routes are protected and require authentication:
+- Unauthenticated users are automatically redirected to `/auth` (login page)
+- The `ProtectedRoute` component checks for valid Supabase sessions
+- Any authenticated user can access the dashboard
 
--- Create index for faster user_id lookups
-create index user_roles_user_id_idx on public.user_roles(user_id);
-```
+### 4. Creating Admin Users
 
-### 4. Set Up Row Level Security Policies
+To create users with access to the dashboard:
 
-```sql
--- Allow anyone to read users for login verification
--- (passwords are hashed so this is safe for authentication)
-create policy "Allow public read for authentication"
-  on public.users
-  for select
-  using (true);
+1. **Via Supabase Dashboard**:
+   - Go to Authentication > Users
+   - Click "Invite user" or "Add user"
+   - Enter email and password
 
--- Allow anyone to insert users (for registration)
-create policy "Allow public insert for registration"
-  on public.users
-  for insert
-  with check (true);
+2. **Via Sign-Up API** (if enabled in your Supabase settings):
+   ```ts
+   const { data, error } = await supabase.auth.signUp({
+     email: 'user@example.com',
+     password: 'securepassword123',
+   });
+   ```
 
--- Allow users to read their own role
-create policy "Users can read their own roles"
-  on public.user_roles
-  for select
-  using (true);
+3. **Via SQL** (for testing):
+   ```sql
+   -- Note: This is for development only
+   -- In production, use Supabase Auth Dashboard or API
+   ```
 
--- Allow role insertion during registration
-create policy "Allow role insertion during registration"
-  on public.user_roles
-  for insert
-  with check (true);
-```
+### 5. Email Configuration
 
-### 5. Create an Owner Account (Optional)
+Configure email settings in your Supabase project:
 
-After setting up the tables, you can manually create an owner account:
+1. Go to **Authentication > Email Templates**
+2. Customize the confirmation and password reset emails
+3. Set up your SMTP settings or use Supabase's default email service
+4. **Optional**: Disable email confirmation for faster development (Authentication > Providers > Email > Confirm email)
 
-```sql
--- First, hash a password using bcrypt (you'll need to do this in your app or use an online tool)
--- For example, if your password is "SecurePass123!", hash it first
+### 6. URL Configuration
 
--- Insert owner user (replace with your actual hashed password)
-insert into public.users (name, email, password)
-values ('Admin User', 'admin@example.com', 'YOUR_HASHED_PASSWORD_HERE');
+Set the following URLs in Supabase Dashboard under **Authentication > URL Configuration**:
 
--- Get the user_id from the inserted user
--- Then assign the owner role
-insert into public.user_roles (user_id, role)
-values ('USER_ID_FROM_PREVIOUS_INSERT', 'owner');
-```
+- **Site URL**: Your application URL (e.g., `https://yourdomain.com`)
+- **Redirect URLs**: Add both your local development URL and production URL
+  - `http://localhost:5173`
+  - `http://localhost:5173/`
+  - `https://yourdomain.com`
+  - `https://yourdomain.com/`
 
 ## 🔐 Security Features
 
-### Password Hashing
-- All passwords are hashed using **bcryptjs** with 10 salt rounds on the client-side before being stored
-- Passwords are never stored in plain text
-- Password verification happens by comparing hashed values
-
-### Role-Based Access Control
-- **Owner**: Full access to admin dashboard and all features
-- **Staff**: Access to admin dashboard with limited permissions
-- **Customer**: Access to storefront only, redirected away from admin routes
-
-### Session Management
-- User sessions are stored in localStorage
-- Sessions persist across page refreshes
-- Logout clears the session from localStorage
+✅ **Secure Password Storage**: Supabase handles password hashing with bcrypt automatically
+✅ **Session Management**: Automatic token refresh and session persistence via localStorage
+✅ **Email Verification**: Can be enabled in Supabase settings
+✅ **Password Reset**: Built-in password reset flow
+✅ **Rate Limiting**: Supabase provides built-in rate limiting for auth endpoints
+✅ **Row Level Security (RLS)**: Use Supabase RLS policies for data access control
 
 ## 🎯 User Flows
 
-### Registration Flow
-1. User fills out registration form with name, email, password
-2. Password is hashed on the client-side using bcrypt
-3. User record is created in `users` table
-4. User role is assigned in `user_roles` table (default: 'customer')
-5. User is directed to login
-
 ### Login Flow
-1. User enters email and password
-2. System fetches user by email from `users` table
-3. Password is verified using bcrypt comparison
-4. User role is fetched from `user_roles` table
-5. User object (without password) is stored in localStorage
-6. User is redirected based on role:
-   - Owner/Staff → `/admin`
-   - Customer → `/`
+1. User enters email and password at `/auth`
+2. System calls `supabase.auth.signInWithPassword()`
+3. Supabase validates credentials and returns session
+4. Session is stored automatically by Supabase client
+5. User is redirected to `/admin` dashboard
+
+### Session Persistence
+- Sessions are automatically persisted in localStorage by Supabase
+- `onAuthStateChange` listener keeps auth state in sync
+- Sessions refresh automatically before expiration
+- Logout calls `supabase.auth.signOut()` and clears the session
 
 ### Route Protection
-- Admin routes (`/admin/*`) require owner or staff role
-- Unauthorized access attempts redirect to login page
-- Already logged-in users are redirected appropriately
+- Admin routes (`/admin/*`) require valid authentication
+- Unauthorized access attempts redirect to `/auth` login page
+- Already logged-in users can access the dashboard immediately
 
 ## 📁 Key Files
 
-- `src/lib/auth.util.ts` - Core authentication utilities
-- `src/contexts/AuthContext.tsx` - Auth state management
-- `src/pages/Auth.tsx` - Login/Signup UI
+- `src/lib/auth.util.ts` - Authentication utilities using Supabase Auth
+- `src/lib/supabase.util.ts` - Supabase client configuration
+- `src/contexts/AuthContext.tsx` - Auth state management with session handling
+- `src/pages/Auth.tsx` - Login UI
 - `src/components/ProtectedRoute.tsx` - Route protection component
-- `src/types/User.type.ts` - TypeScript types for users and roles
 
-## 🚀 Environment Variables
+## 🔄 Future Enhancements
 
-Make sure your `.env` file contains:
+For **role-based access control** (e.g., admin, staff, customer roles):
 
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_KEY=your_supabase_anon_key
-```
+1. Create a `user_roles` table:
+   ```sql
+   create type public.app_role as enum ('admin', 'moderator', 'user');
+   
+   create table public.user_roles (
+     id uuid primary key default gen_random_uuid(),
+     user_id uuid references auth.users(id) on delete cascade not null,
+     role app_role not null,
+     unique (user_id, role)
+   );
+   
+   alter table public.user_roles enable row level security;
+   ```
+
+2. Create a security definer function:
+   ```sql
+   create or replace function public.has_role(_user_id uuid, _role app_role)
+   returns boolean
+   language sql
+   stable
+   security definer
+   set search_path = public
+   as $$
+     select exists (
+       select 1
+       from public.user_roles
+       where user_id = _user_id
+         and role = _role
+     )
+   $$;
+   ```
+
+3. Use RLS policies with the function:
+   ```sql
+   create policy "Admins can access"
+   on public.some_table
+   for select
+   to authenticated
+   using (public.has_role(auth.uid(), 'admin'));
+   ```
+
+Other enhancements to consider:
+- Two-factor authentication (Supabase supports MFA)
+- Social login (Google, GitHub, etc.)
+- Magic link authentication
+- Session expiration customization
+- Admin panel for user management
 
 ## ⚠️ Important Notes
 
 1. **Never commit** your `.env` file to version control
-2. **RLS policies** should be reviewed and adjusted based on your security requirements
-3. **Password complexity** is enforced in the signup form validation
-4. **Client-side hashing** means passwords are hashed before transmission to Supabase
-5. Consider implementing **rate limiting** on the database level to prevent brute force attacks
+2. **Email verification** can be disabled during development for easier testing
+3. **Supabase handles** all password hashing and security automatically
+4. **Sessions are managed** by Supabase client - no manual localStorage handling needed
+5. **RLS policies** should be configured for any custom tables you create
 
-## 🔄 Future Enhancements
+## 🐛 Troubleshooting
 
-Consider adding:
-- Password reset functionality
-- Email verification
-- Two-factor authentication
-- Session expiration
-- Account lockout after failed attempts
-- Admin panel for user management
+- **Sessions not persisting**: Ensure localStorage is enabled in browser
+- **Email not sending**: Verify SMTP configuration in Supabase Dashboard
+- **Redirects failing**: Check that all URLs are added to allowed redirect URLs
+- **Login fails**: Check console for error messages and verify Supabase credentials

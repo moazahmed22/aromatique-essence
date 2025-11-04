@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { loginUser, hasDashboardAccess } from "@/lib/auth.util";
+import { loginUser } from "@/lib/auth.util";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Validation schema for login only
@@ -27,17 +27,12 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   // Redirect if already logged in
   if (user) {
-    // Redirect based on role
-    if (hasDashboardAccess(user)) {
-      navigate("/admin");
-    } else {
-      navigate("/");
-    }
+    navigate("/admin");
     return null;
   }
 
@@ -50,18 +45,14 @@ export default function Auth() {
     },
   });
 
-  // Handle login with custom authentication
+  // Handle login with Supabase Auth
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
 
     try {
-      const {
-        success,
-        user: loggedInUser,
-        error,
-      } = await loginUser(data.email, data.password);
+      const { success, error } = await loginUser(data.email, data.password);
 
-      if (!success || !loggedInUser) {
+      if (!success) {
         toast({
           title: "Login Failed",
           description: error || "Invalid credentials",
@@ -70,20 +61,13 @@ export default function Auth() {
         return;
       }
 
-      // Update auth context
-      setUser(loggedInUser);
-
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
 
-      // Redirect based on role
-      if (hasDashboardAccess(loggedInUser)) {
-        navigate("/admin");
-      } else {
-        navigate("/");
-      }
+      // Redirect to admin dashboard
+      navigate("/admin");
     } catch (error) {
       toast({
         title: "Error",
