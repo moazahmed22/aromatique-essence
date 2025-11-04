@@ -32,7 +32,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Perfume } from "@/types/Perfumes.type";
 import { useProducts } from "@/lib/products.util";
 import { supabase } from "@/lib/supabase.util";
-import { add } from "date-fns";
 
 // TODO: Replace static perfumes array with Supabase query
 // const { data: products } = await supabase.from('products').select('*')

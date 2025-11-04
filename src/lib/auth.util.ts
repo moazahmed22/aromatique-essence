@@ -1,44 +1,9 @@
-import { supabase } from './supabase.util';
-import bcrypt from 'bcryptjs';
-import type { User, UserRole, UserWithRole } from '@/types/User.type';
-
-/**
- * Custom Authentication Utilities
- * 
- * IMPORTANT: This system uses custom Supabase tables, NOT Supabase Auth.
- * 
- * Required Database Schema:
- * 
- * 1. Create users table:
- *    create table public.users (
- *      id uuid primary key default gen_random_uuid(),
- *      name text not null,
- *      email text unique not null,
- *      password text not null,
- *      created_at timestamp default now(),
- *      updated_at timestamp default now()
- *    );
- * 
- * 2. Create role enum:
- *    create type public.app_role as enum ('owner', 'staff', 'customer');
- * 
- * 3. Create user_roles table:
- *    create table public.user_roles (
- *      id uuid primary key default gen_random_uuid(),
- *      user_id uuid references public.users(id) on delete cascade not null,
- *      role app_role not null,
- *      unique (user_id, role)
- *    );
- * 
- * 4. Enable RLS on both tables:
- *    alter table public.users enable row level security;
- *    alter table public.user_roles enable row level security;
- * 
- * 5. Create RLS policies as needed for your security requirements
- */
+import { supabase } from "./supabase.util";
+import type { User, UserRole, UserWithRole } from "@/types/User.type";
+import bcrypt from "bcryptjs"; 
 
 const SALT_ROUNDS = 10;
-const STORAGE_KEY = 'currentUser';
+const STORAGE_KEY = "currentUser";
 
 /**
  * Register a new user with hashed password
@@ -52,7 +17,7 @@ export async function registerUser(
   name: string,
   email: string,
   password: string,
-  role: UserRole = 'customer'
+  role: UserRole = "customer"
 ): Promise<{ success: boolean; user?: UserWithRole; error?: string }> {
   try {
     // Hash password on client side before sending to database
@@ -60,7 +25,7 @@ export async function registerUser(
 
     // Insert new user into users table
     const { data: userData, error: userError } = await supabase
-      .from('users')
+      .from("users")
       .insert([
         {
           name,
@@ -73,26 +38,24 @@ export async function registerUser(
 
     if (userError) {
       // Check for duplicate email
-      if (userError.code === '23505') {
-        return { success: false, error: 'Email already registered' };
+      if (userError.code === "23505") {
+        return { success: false, error: "Email already registered" };
       }
       return { success: false, error: userError.message };
     }
 
     // Insert user role into user_roles table
-    const { error: roleError } = await supabase
-      .from('user_roles')
-      .insert([
-        {
-          user_id: userData.id,
-          role,
-        },
-      ]);
+    const { error: roleError } = await supabase.from("user_roles").insert([
+      {
+        user_id: userData.id,
+        role,
+      },
+    ]);
 
     if (roleError) {
       // If role insertion fails, we should clean up the user
-      await supabase.from('users').delete().eq('id', userData.id);
-      return { success: false, error: 'Failed to assign user role' };
+      await supabase.from("users").delete().eq("id", userData.id);
+      return { success: false, error: "Failed to assign user role" };
     }
 
     // Create user object without password
@@ -107,8 +70,8 @@ export async function registerUser(
 
     return { success: true, user };
   } catch (error) {
-    console.error('Registration error:', error);
-    return { success: false, error: 'Registration failed. Please try again.' };
+    console.error("Registration error:", error);
+    return { success: false, error: "Registration failed. Please try again." };
   }
 }
 
@@ -125,31 +88,31 @@ export async function loginUser(
   try {
     // Fetch user by email
     const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email.toLowerCase().trim())
+      .from("users")
+      .select("*")
+      .eq("email", email.toLowerCase().trim())
       .single();
 
     if (userError || !userData) {
-      return { success: false, error: 'Invalid email or password' };
+      return { success: false, error: "Invalid email or password" };
     }
 
     // Verify password locally using bcrypt
     const passwordMatch = await bcrypt.compare(password, userData.password);
 
     if (!passwordMatch) {
-      return { success: false, error: 'Invalid email or password' };
+      return { success: false, error: "Invalid email or password" };
     }
 
     // Fetch user role
     const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userData.id)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userData.id)
       .single();
 
     if (roleError || !roleData) {
-      return { success: false, error: 'Failed to fetch user role' };
+      return { success: false, error: "Failed to fetch user role" };
     }
 
     // Create user object without password
@@ -167,8 +130,8 @@ export async function loginUser(
 
     return { success: true, user };
   } catch (error) {
-    console.error('Login error:', error);
-    return { success: false, error: 'Login failed. Please try again.' };
+    console.error("Login error:", error);
+    return { success: false, error: "Login failed. Please try again." };
   }
 }
 
@@ -183,7 +146,7 @@ export function getCurrentUser(): UserWithRole | null {
 
     return JSON.parse(userJson) as UserWithRole;
   } catch (error) {
-    console.error('Error getting current user:', error);
+    console.error("Error getting current user:", error);
     return null;
   }
 }
@@ -201,7 +164,7 @@ export function logoutUser(): void {
  * @returns true if user is owner or staff
  */
 export function hasDashboardAccess(user: UserWithRole | null): boolean {
-  return user?.role === 'owner' || user?.role === 'staff';
+  return user?.role === "owner" || user?.role === "staff";
 }
 
 /**
