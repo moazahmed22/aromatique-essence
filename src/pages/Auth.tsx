@@ -13,45 +13,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { registerUser, loginUser, hasDashboardAccess } from "@/lib/auth.util";
+import { loginUser, hasDashboardAccess } from "@/lib/auth.util";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Validation schemas
+// Validation schema for login only
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-const signupSchema = z
-  .object({
-    name: z
-      .string()
-      .min(2, "Name must be at least 2 characters")
-      .max(100, "Name must be less than 100 characters"),
-    email: z.string().email("Please enter a valid email address"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
-      ),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
 type LoginFormData = z.infer<typeof loginSchema>;
-type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function Auth() {
   const navigate = useNavigate();
   const { user, setUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [isLoading, setIsLoading] = useState(false);
 
   // Redirect if already logged in
@@ -71,17 +47,6 @@ export default function Auth() {
     defaultValues: {
       email: "",
       password: "",
-    },
-  });
-
-  // Signup form
-  const signupForm = useForm<SignupFormData>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
     },
   });
 
@@ -130,45 +95,6 @@ export default function Auth() {
     }
   };
 
-  // Handle signup with custom authentication
-  const handleSignup = async (data: SignupFormData) => {
-    setIsLoading(true);
-
-    try {
-      // Register as customer by default
-      const {
-        success,
-        user: newUser,
-        error,
-      } = await registerUser(data.name, data.email, data.password, "customer");
-
-      if (!success || !newUser) {
-        toast({
-          title: "Signup Failed",
-          description: error || "Failed to create account",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Account Created!",
-        description: "You can now log in with your credentials.",
-      });
-
-      // Switch to login tab
-      setActiveTab("login");
-      signupForm.reset();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-accent/10 px-4 py-12">
@@ -178,143 +104,50 @@ export default function Auth() {
             Aromatique
           </CardTitle>
           <CardDescription className="text-center">
-            {activeTab === "login"
-              ? "Welcome back! Please login to your account"
-              : "Create an account to get started"}
+            Welcome back! Please login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as "login" | "signup")}
+          <form
+            onSubmit={loginForm.handleSubmit(handleLogin)}
+            className="space-y-4"
           >
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
+            <div className="space-y-2">
+              <Label htmlFor="login-email">Email</Label>
+              <Input
+                id="login-email"
+                type="email"
+                placeholder="your@email.com"
+                {...loginForm.register("email")}
+                disabled={isLoading}
+              />
+              {loginForm.formState.errors.email && (
+                <p className="text-sm text-destructive">
+                  {loginForm.formState.errors.email.message}
+                </p>
+              )}
+            </div>
 
-            {/* Login Tab */}
-            <TabsContent value="login">
-              <form
-                onSubmit={loginForm.handleSubmit(handleLogin)}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="your@email.com"
-                    {...loginForm.register("email")}
-                    disabled={isLoading}
-                  />
-                  {loginForm.formState.errors.email && (
-                    <p className="text-sm text-destructive">
-                      {loginForm.formState.errors.email.message}
-                    </p>
-                  )}
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="login-password">Password</Label>
+              <Input
+                id="login-password"
+                type="password"
+                placeholder="••••••••"
+                {...loginForm.register("password")}
+                disabled={isLoading}
+              />
+              {loginForm.formState.errors.password && (
+                <p className="text-sm text-destructive">
+                  {loginForm.formState.errors.password.message}
+                </p>
+              )}
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    {...loginForm.register("password")}
-                    disabled={isLoading}
-                  />
-                  {loginForm.formState.errors.password && (
-                    <p className="text-sm text-destructive">
-                      {loginForm.formState.errors.password.message}
-                    </p>
-                  )}
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Logging in..." : "Login"}
-                </Button>
-              </form>
-            </TabsContent>
-
-            {/* Signup Tab */}
-            <TabsContent value="signup">
-              <form
-                onSubmit={signupForm.handleSubmit(handleSignup)}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="John Doe"
-                    {...signupForm.register("name")}
-                    disabled={isLoading}
-                  />
-                  {signupForm.formState.errors.name && (
-                    <p className="text-sm text-destructive">
-                      {signupForm.formState.errors.name.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="your@email.com"
-                    {...signupForm.register("email")}
-                    disabled={isLoading}
-                  />
-                  {signupForm.formState.errors.email && (
-                    <p className="text-sm text-destructive">
-                      {signupForm.formState.errors.email.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    {...signupForm.register("password")}
-                    disabled={isLoading}
-                  />
-                  {signupForm.formState.errors.password && (
-                    <p className="text-sm text-destructive">
-                      {signupForm.formState.errors.password.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password">
-                    Confirm Password
-                  </Label>
-                  <Input
-                    id="signup-confirm-password"
-                    type="password"
-                    placeholder="••••••••"
-                    {...signupForm.register("confirmPassword")}
-                    disabled={isLoading}
-                  />
-                  {signupForm.formState.errors.confirmPassword && (
-                    <p className="text-sm text-destructive">
-                      {signupForm.formState.errors.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Sign Up"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Login"}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>

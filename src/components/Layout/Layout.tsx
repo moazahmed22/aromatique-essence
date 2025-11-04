@@ -1,6 +1,6 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ShoppingBag, User, Menu, Search } from "lucide-react";
+import { ShoppingBag, User, Menu, Search, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -18,21 +18,38 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { set } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { hasDashboardAccess } from "@/lib/auth.util";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export const Layout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { items } = useCart();
+  const { user, logout } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return "U";
+    return user.name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -113,33 +130,60 @@ export const Layout = () => {
               </Button>
             </Link>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="flex">
-                  <User className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
-                {/* <DropdownMenuLabel>My Account</DropdownMenuLabel> */}
-                <DropdownMenuGroup>
-                  <Link to="/Auth">
-                    <DropdownMenuItem className="cursor-pointer">
-                      Login & Signup
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    {hasDashboardAccess(user) && (
+                      <Link to="/admin">
+                        <DropdownMenuItem className="cursor-pointer">
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          Dashboard
+                        </DropdownMenuItem>
+                      </Link>
+                    )}
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={toggleTheme}
+                    >
+                      Switch Dark Mode
                     </DropdownMenuItem>
-                  </Link>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={toggleTheme}
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onClick={handleLogout}
                   >
-                    Switch&nbsp;<span className="font-bold">Dark Mode</span>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
                   </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="hover:!bg-red-300 hover:!text-red-600 hover:font-bold cursor-pointer">
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/auth">
+                <Button variant="ghost" size="sm">
+                  Login
+                </Button>
+              </Link>
+            )}
 
             {/* Mobile Menu */}
             <Sheet>
