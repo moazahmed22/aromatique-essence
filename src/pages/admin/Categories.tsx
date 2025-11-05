@@ -102,7 +102,9 @@ export default function Categories() {
     } catch (error) {
       console.error(error);
       toast({
-        title: editMode ? "Failed to update category" : "Failed to add category",
+        title: editMode
+          ? "Failed to update category"
+          : "Failed to add category",
         description: "Please try again later.",
         variant: "destructive",
       });
@@ -113,10 +115,7 @@ export default function Categories() {
     if (!confirm("Are you sure you want to delete this category?")) return;
 
     try {
-      const { error } = await supabase
-        .from("categories")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("categories").delete().eq("id", id);
 
       if (error) throw error;
 
@@ -146,8 +145,8 @@ export default function Categories() {
             Organize your products into categories
           </p>
         </div>
-        <Dialog 
-          open={isDialogOpen} 
+        <Dialog
+          open={isDialogOpen}
           onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) resetForm();
@@ -161,28 +160,35 @@ export default function Categories() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editMode ? "Edit Category" : "Add New Category"}</DialogTitle>
+              <DialogTitle>
+                {editMode ? "Edit Category" : "Add New Category"}
+              </DialogTitle>
               <DialogDescription>
-                {editMode ? "Update" : "Create a new"} category to organize your products.
+                {editMode ? "Update" : "Create a new"} category to organize your
+                products.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="category-name">Category Name</Label>
-                <Input 
-                  id="category-name" 
-                  placeholder="e.g., Luxury" 
+                <Input
+                  id="category-name"
+                  placeholder="e.g., Luxury"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="category-slug">Slug</Label>
-                <Input 
-                  id="category-slug" 
-                  placeholder="luxury" 
+                <Input
+                  id="category-slug"
+                  placeholder="luxury"
                   value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, slug: e.target.value })
+                  }
                 />
               </div>
               <div className="grid gap-2">
@@ -191,15 +197,20 @@ export default function Categories() {
                   id="category-description"
                   placeholder="Enter category description..."
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                setIsDialogOpen(false);
-                resetForm();
-              }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsDialogOpen(false);
+                  resetForm();
+                }}
+              >
                 Cancel
               </Button>
               <Button onClick={handleSaveCategory}>
@@ -217,7 +228,8 @@ export default function Categories() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Products</TableHead>
+              {/* product count is not yet implemented */}
+              {/* <TableHead>Products</TableHead> */}
               <TableHead>Created At</TableHead>
               <TableHead>Updated At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -237,7 +249,8 @@ export default function Categories() {
                   <TableCell className="max-w-md truncate">
                     {category.description}
                   </TableCell>
-                  <TableCell>{category.product_count} products</TableCell>
+                  {/* product count is not yet implemented */}
+                  {/* <TableCell>{category.product_count} products</TableCell> */}
                   <TableCell>
                     {new Date(category.created_at).toLocaleDateString()}
                   </TableCell>
@@ -246,10 +259,11 @@ export default function Categories() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         onClick={() => handleOpenEdit(category)}
+                        disabled
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
@@ -257,6 +271,7 @@ export default function Categories() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDeleteCategory(category.id)}
+                        disabled
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

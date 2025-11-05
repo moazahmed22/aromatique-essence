@@ -32,7 +32,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Perfume } from "@/types/Perfumes.type";
 import { useProducts } from "@/lib/products.util";
 import { supabase } from "@/lib/supabase.util";
-import { incrementCategoryCount, decrementCategoryCount, useCategories } from "@/lib/categories.util";
+// product count is not yet implemented
+import {
+  //   incrementCategoryCount,
+  //   decrementCategoryCount,
+  useCategories,
+} from "@/lib/categories.util";
 
 // TODO: Replace static perfumes array with Supabase query
 // const { data: products } = await supabase.from('products').select('*')
@@ -175,8 +180,8 @@ export default function Products() {
 
       if (editMode && formData.id) {
         // Get original product to check if category changed
-        const originalProduct = perfumes?.find(p => p.id === formData.id);
-        
+        const originalProduct = perfumes?.find((p) => p.id === formData.id);
+
         // Update existing product
         const { error } = await supabase
           .from("perfumes")
@@ -185,11 +190,14 @@ export default function Products() {
 
         if (error) throw error;
 
-        // Update category counts if category changed
-        if (originalProduct && originalProduct.category_slug !== formData.category_slug) {
-          await decrementCategoryCount(originalProduct.category_slug);
-          await incrementCategoryCount(formData.category_slug);
-        }
+        // Update category counts if category changed (not yet implemented)
+        // if (
+        //   originalProduct &&
+        //   originalProduct.category_slug !== formData.category_slug
+        // ) {
+        //   await decrementCategoryCount(originalProduct.category_slug);
+        //   await incrementCategoryCount(formData.category_slug);
+        // }
 
         toast({
           title: "Product updated",
@@ -205,7 +213,7 @@ export default function Products() {
         if (error) throw error;
 
         // Increment category count
-        await incrementCategoryCount(formData.category_slug);
+        // await incrementCategoryCount(formData.category_slug);
 
         toast({
           title: "Product added",
@@ -215,7 +223,6 @@ export default function Products() {
 
       resetForm();
       setIsDialogOpen(false);
-      window.location.reload();
     } catch (error) {
       console.error(error);
       toast({
@@ -231,23 +238,23 @@ export default function Products() {
 
     try {
       // Get product to find its category
-      const product = perfumes?.find(p => p.id === id);
-      
+      const product = perfumes?.find((p) => p.id === id);
+
       const { error } = await supabase.from("perfumes").delete().eq("id", id);
 
       if (error) throw error;
 
       // Decrement category count
-      if (product) {
-        await decrementCategoryCount(product.category_slug);
-      }
+      // if (product) {
+      // await decrementCategoryCount(product.category_slug);
+      // }
 
       toast({
         title: "Product deleted",
         description: "Product has been removed from the catalog.",
       });
 
-      window.location.reload();
+      // window.location.reload();
     } catch (error) {
       console.error(error);
       toast({
@@ -330,6 +337,7 @@ export default function Products() {
                     onChange={(e) =>
                       setFormData({ ...formData, stock: e.target.value })
                     }
+                    min={1}
                   />
                 </div>
               </div>

@@ -12,12 +12,12 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
-  { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-  { name: 'Products', path: '/admin/products', icon: Package },
-  { name: 'Categories', path: '/admin/categories', icon: FolderTree },
-  { name: 'Orders', path: '/admin/orders', icon: ShoppingCart },
-  { name: 'Customers', path: '/admin/customers', icon: Users },
-  { name: 'Settings', path: '/admin/settings', icon: Settings },
+  { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
+  { name: "Products", path: "/admin/products", icon: Package },
+  { name: "Categories", path: "/admin/categories", icon: FolderTree },
+  // { name: "Orders", path: "/admin/orders", icon: ShoppingCart },
+  // { name: "Customers", path: "/admin/customers", icon: Users },
+  // { name: "Settings", path: "/admin/settings", icon: Settings },
 ];
 
 export const Sidebar = () => {
@@ -27,7 +27,7 @@ export const Sidebar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/auth");
+    navigate("/");
   };
 
   return (
@@ -46,7 +46,7 @@ export const Sidebar = () => {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <li key={item.path}>
                 <Link
