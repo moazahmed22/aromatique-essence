@@ -35,26 +35,41 @@ import { supabase } from "@/lib/supabase.util";
 
 // TODO: Replace static perfumes array with Supabase query
 // const { data: products } = await supabase.from('products').select('*')
-type addProductFromType = {
+type ProductFormType = {
+  id?: number;
   name: string;
   price: number | string;
-  stockQuantity: number | string;
+  stock: number | string;
   category_slug: string;
   description: string;
   image?: File | string;
+  volume: string;
+  rating: number | string;
+  bestseller: boolean;
+  featured: boolean;
+  notes_top: string;
+  notes_middle: string;
+  notes_base: string;
 };
 
 export default function Products() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [addProductFromData, setAddProductFromData] =
-    useState<addProductFromType>({
-      name: "",
-      price: "",
-      stockQuantity: "",
-      category_slug: "",
-      description: "",
-    });
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState<ProductFormType>({
+    name: "",
+    price: "",
+    stock: "",
+    category_slug: "",
+    description: "",
+    volume: "50ml",
+    rating: 5,
+    bestseller: false,
+    featured: false,
+    notes_top: "",
+    notes_middle: "",
+    notes_base: "",
+  });
   const { toast } = useToast();
   const { data: perfumes, isLoading }: { data: Perfume[]; isLoading: boolean } =
     useProducts();
@@ -66,26 +81,61 @@ export default function Products() {
       product.category_slug.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddProduct = async () => {
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      price: "",
+      stock: "",
+      category_slug: "",
+      description: "",
+      volume: "50ml",
+      rating: 5,
+      bestseller: false,
+      featured: false,
+      notes_top: "",
+      notes_middle: "",
+      notes_base: "",
+    });
+    setEditMode(false);
+  };
+
+  const handleOpenEdit = (product: Perfume) => {
+    setFormData({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      stock: product.stock,
+      category_slug: product.category_slug,
+      description: product.description,
+      volume: product.volume,
+      rating: product.rating,
+      bestseller: product.bestseller || false,
+      featured: product.featured || false,
+      notes_top: product.notes_top?.join(", ") || "",
+      notes_middle: product.notes_middle?.join(", ") || "",
+      notes_base: product.notes_base?.join(", ") || "",
+      image: product.image,
+    });
+    setEditMode(true);
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveProduct = async () => {
     try {
       let imageURL: string | null = null;
 
       // Upload image if selected
-      if (
-        addProductFromData.image &&
-        addProductFromData.image instanceof File
-      ) {
-        const file = addProductFromData.image;
-        const fileName = `${file.name}`;
+      if (formData.image && formData.image instanceof File) {
+        const file = formData.image;
+        const fileName = `${Date.now()}_${file.name}`;
         const { data: uploadedImage, error: uploadError } =
           await supabase.storage.from("images").upload(fileName, file);
 
         if (uploadError) {
-          console.log(uploadError);
-
           toast({
             title: "Image upload failed",
-            description: "We'll use the default placeholder image instead.",
+            description: "We'll use the existing image instead.",
+            variant: "destructive",
           });
         } else {
           const { data: URL } = supabase.storage
@@ -95,22 +145,50 @@ export default function Products() {
         }
       }
 
-      // 🧹 Prepare clean object for Supabase
-      const productToInsert = {
-        name: addProductFromData.name.trim(),
-        price: addProductFromData.price,
-        stock: addProductFromData.stockQuantity,
-        category_slug: addProductFromData.category_slug,
-        description: addProductFromData.description.trim(),
-        // spread the returned image value either as a string or undefined
+      // Prepare product data
+      const productData = {
+        name: formData.name.trim(),
+        price: Number(formData.price),
+        stock: Number(formData.stock),
+        category_slug: formData.category_slug,
+        description: formData.description.trim(),
+        volume: formData.volume,
+        rating: Number(formData.rating),
+        bestseller: formData.bestseller,
+        featured: formData.featured,
+        notes_top: formData.notes_top
+          .split(",")
+          .map((n) => n.trim())
+          .filter(Boolean),
+        notes_middle: formData.notes_middle
+          .split(",")
+          .map((n) => n.trim())
+          .filter(Boolean),
+        notes_base: formData.notes_base
+          .split(",")
+          .map((n) => n.trim())
+          .filter(Boolean),
         ...(imageURL ? { image: imageURL } : {}),
       };
 
-      // 🪄 Insert into Supabase
-      setTimeout(async () => {
-        const { data, error } = await supabase
+      if (editMode && formData.id) {
+        // Update existing product
+        const { error } = await supabase
           .from("perfumes")
-          .insert([productToInsert])
+          .update(productData)
+          .eq("id", formData.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Product updated",
+          description: "Product has been updated successfully.",
+        });
+      } else {
+        // Insert new product
+        const { error } = await supabase
+          .from("perfumes")
+          .insert([productData])
           .select();
 
         if (error) throw error;
@@ -119,34 +197,43 @@ export default function Products() {
           title: "Product added",
           description: "New product has been added successfully.",
         });
+      }
 
-        // ✅ Reset form & close dialog
-        setAddProductFromData({
-          name: "",
-          price: "",
-          stockQuantity: "",
-          category_slug: "",
-          description: "",
-        });
-        setIsDialogOpen(false);
-      }, 2000);
+      resetForm();
+      setIsDialogOpen(false);
+      window.location.reload();
     } catch (error) {
       console.error(error);
       toast({
-        title: "Failed to add product",
+        title: editMode ? "Failed to update product" : "Failed to add product",
         description: "Please check your network or try again later.",
         variant: "destructive",
       });
     }
   };
 
-  const handleDeleteProduct = (id: number) => {
-    // TODO: Implement Supabase delete
-    // await supabase.from('products').delete().eq('id', id)
-    toast({
-      title: "Product deleted",
-      description: "Product has been removed from the catalog.",
-    });
+  const handleDeleteProduct = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+
+    try {
+      const { error } = await supabase.from("perfumes").delete().eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Product deleted",
+        description: "Product has been removed from the catalog.",
+      });
+
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Failed to delete product",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -159,18 +246,27 @@ export default function Products() {
             Manage your perfume catalog
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}
+        >
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
               Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
+              <DialogTitle>
+                {editMode ? "Edit Product" : "Add New Product"}
+              </DialogTitle>
               <DialogDescription>
-                Fill in the details to add a new perfume to your catalog.
+                Fill in the details to {editMode ? "update" : "add"} a perfume{" "}
+                {editMode ? "in" : "to"} your catalog.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -180,15 +276,13 @@ export default function Products() {
                   id="name"
                   placeholder="e.g., Golden Oud"
                   required
-                  value={addProductFromData.name}
+                  value={formData.name}
                   onChange={(e) =>
-                    setAddProductFromData({
-                      ...addProductFromData,
-                      name: e.target.value,
-                    })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="price">Price (AED)</Label>
@@ -197,12 +291,9 @@ export default function Products() {
                     type="number"
                     placeholder="2500"
                     required
-                    value={addProductFromData.price}
+                    value={formData.price}
                     onChange={(e) =>
-                      setAddProductFromData({
-                        ...addProductFromData,
-                        price: e.target.value,
-                      })
+                      setFormData({ ...formData, price: e.target.value })
                     }
                   />
                 </div>
@@ -213,80 +304,190 @@ export default function Products() {
                     type="number"
                     placeholder="20"
                     required
-                    value={addProductFromData.stockQuantity}
+                    value={formData.stock}
                     onChange={(e) =>
-                      setAddProductFromData({
-                        ...addProductFromData,
-                        stockQuantity: e.target.value,
-                      })
+                      setFormData({ ...formData, stock: e.target.value })
                     }
                   />
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  value={addProductFromData.category_slug}
-                  onValueChange={(e) =>
-                    setAddProductFromData({
-                      ...addProductFromData,
-                      category_slug: e,
-                    })
-                  }
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={`${
-                        addProductFromData.category_slug || "Select category"
-                      }`}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="men">Men</SelectItem>
-                    <SelectItem value="women">Women</SelectItem>
-                    <SelectItem value="unisex">Unisex</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={formData.category_slug}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, category_slug: value })
+                    }
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Men">Men</SelectItem>
+                      <SelectItem value="Women">Women</SelectItem>
+                      <SelectItem value="Unisex">Unisex</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="volume">Volume</Label>
+                  <Select
+                    value={formData.volume}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, volume: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select volume" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30ml">30ml</SelectItem>
+                      <SelectItem value="50ml">50ml</SelectItem>
+                      <SelectItem value="100ml">100ml</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
                   placeholder="Enter product description..."
                   required
-                  value={addProductFromData.description}
+                  value={formData.description}
                   onChange={(e) =>
-                    setAddProductFromData({
-                      ...addProductFromData,
-                      description: e.target.value,
-                    })
+                    setFormData({ ...formData, description: e.target.value })
                   }
                 />
               </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="image">Image URL</Label>
-                {/* upload image first */}
+                <Label htmlFor="notes_top">Top Notes (comma-separated)</Label>
+                <Input
+                  id="notes_top"
+                  placeholder="e.g., Bergamot, Lemon, Orange"
+                  value={formData.notes_top}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes_top: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="notes_middle">
+                  Middle Notes (comma-separated)
+                </Label>
+                <Input
+                  id="notes_middle"
+                  placeholder="e.g., Rose, Jasmine, Lavender"
+                  value={formData.notes_middle}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes_middle: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="notes_base">Base Notes (comma-separated)</Label>
+                <Input
+                  id="notes_base"
+                  placeholder="e.g., Oud, Musk, Amber"
+                  value={formData.notes_base}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes_base: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="rating">Rating</Label>
+                  <Input
+                    id="rating"
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    placeholder="4.5"
+                    value={formData.rating}
+                    onChange={(e) =>
+                      setFormData({ ...formData, rating: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2 pt-8">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.bestseller}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            bestseller: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">Bestseller</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.featured}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            featured: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">Featured</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="image">
+                  {editMode ? "Change Image (optional)" : "Product Image"}
+                </Label>
                 <Input
                   id="image"
                   type="file"
-                  placeholder="/images/product.png"
-                  required
-                  // value={addProductFromData.imageURL}
+                  accept="image/*"
                   onChange={(e) =>
-                    setAddProductFromData({
-                      ...addProductFromData,
-                      image: e.target.files[0],
+                    setFormData({
+                      ...formData,
+                      image: e.target.files?.[0],
                     })
                   }
                 />
+                {editMode && typeof formData.image === "string" && (
+                  <p className="text-sm text-muted-foreground">
+                    Current: {formData.image}
+                  </p>
+                )}
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsDialogOpen(false);
+                  resetForm();
+                }}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleAddProduct}>Add Product</Button>
+              <Button onClick={handleSaveProduct}>
+                {editMode ? "Update Product" : "Add Product"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -347,7 +548,11 @@ export default function Products() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenEdit(product)}
+                      >
                         <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
