@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Perfume } from "@/types/Perfumes.type";
 import { useProducts } from "@/lib/products.util";
 import { supabase } from "@/lib/supabase.util";
+import { incrementCategoryCount, decrementCategoryCount, useCategories } from "@/lib/categories.util";
 
 // TODO: Replace static perfumes array with Supabase query
 // const { data: products } = await supabase.from('products').select('*')
@@ -73,6 +74,7 @@ export default function Products() {
   const { toast } = useToast();
   const { data: perfumes, isLoading }: { data: Perfume[]; isLoading: boolean } =
     useProducts();
+  const { data: categories } = useCategories();
 
   // Filter products based on search
   const filteredProducts = perfumes?.filter(
@@ -172,6 +174,9 @@ export default function Products() {
       };
 
       if (editMode && formData.id) {
+        // Get original product to check if category changed
+        const originalProduct = perfumes?.find(p => p.id === formData.id);
+        
         // Update existing product
         const { error } = await supabase
           .from("perfumes")
@@ -179,6 +184,12 @@ export default function Products() {
           .eq("id", formData.id);
 
         if (error) throw error;
+
+        // Update category counts if category changed
+        if (originalProduct && originalProduct.category_slug !== formData.category_slug) {
+          await decrementCategoryCount(originalProduct.category_slug);
+          await incrementCategoryCount(formData.category_slug);
+        }
 
         toast({
           title: "Product updated",
@@ -192,6 +203,9 @@ export default function Products() {
           .select();
 
         if (error) throw error;
+
+        // Increment category count
+        await incrementCategoryCount(formData.category_slug);
 
         toast({
           title: "Product added",
@@ -216,9 +230,17 @@ export default function Products() {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
+      // Get product to find its category
+      const product = perfumes?.find(p => p.id === id);
+      
       const { error } = await supabase.from("perfumes").delete().eq("id", id);
 
       if (error) throw error;
+
+      // Decrement category count
+      if (product) {
+        await decrementCategoryCount(product.category_slug);
+      }
 
       toast({
         title: "Product deleted",
@@ -326,9 +348,11 @@ export default function Products() {
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Men">Men</SelectItem>
-                      <SelectItem value="Women">Women</SelectItem>
-                      <SelectItem value="Unisex">Unisex</SelectItem>
+                      {categories?.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.slug}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

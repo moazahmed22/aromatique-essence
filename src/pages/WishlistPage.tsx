@@ -10,17 +10,22 @@ import {
 } from "@/components/ui/select";
 
 import { useWishlist } from "@/contexts/wishlistContext";
+import { useCategories } from "@/lib/categories.util";
 
 const WishlistPage = () => {
-  const categories = ["All", "Men", "Women", "Unisex"] as const;
+  const { data: categoriesData } = useCategories();
+  const categories = [
+    { name: "All", slug: "all" },
+    ...(categoriesData?.map(cat => ({ name: cat.name, slug: cat.slug })) || [])
+  ];
 
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("default");
   const { items: wishlistedPerfumes } = useWishlist();
 
   // Filter by category
   let filteredPerfumes =
-    selectedCategory === "All"
+    selectedCategory === "all"
       ? wishlistedPerfumes
       : wishlistedPerfumes.filter((p) => p.category_slug === selectedCategory);
 
@@ -54,11 +59,11 @@ const WishlistPage = () => {
           <div className="flex gap-2 flex-wrap justify-center">
             {categories.map((category) => (
               <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                onClick={() => setSelectedCategory(category)}
+                key={category.slug}
+                variant={selectedCategory === category.slug ? "default" : "outline"}
+                onClick={() => setSelectedCategory(category.slug)}
               >
-                {category}
+                {category.name}
               </Button>
             ))}
           </div>

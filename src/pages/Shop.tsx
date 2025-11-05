@@ -11,10 +11,15 @@ import {
 } from "@/components/ui/select";
 import { searchPerfumes } from "@/lib/search.util";
 import { useProducts } from "@/lib/products.util";
+import { useCategories } from "@/lib/categories.util";
 import { Perfume } from "@/types/Perfumes.type";
 
 const Shop = () => {
-  const categories = ["All", "Men", "Women", "Unisex"] as const;
+  const { data: categoriesData } = useCategories();
+  const categories = [
+    { name: "All", slug: "all" },
+    ...(categoriesData?.map(cat => ({ name: cat.name, slug: cat.slug })) || [])
+  ];
 
   const [searchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -86,17 +91,15 @@ const Shop = () => {
           <div className="flex gap-2 flex-wrap justify-center">
             {categories.map((category) => (
               <Button
-                key={category}
+                key={category.slug}
                 variant={
-                  selectedCategory === category.toLocaleLowerCase()
+                  selectedCategory === category.slug
                     ? "default"
                     : "outline"
                 }
-                onClick={() =>
-                  setSelectedCategory(category.toLocaleLowerCase())
-                }
+                onClick={() => setSelectedCategory(category.slug)}
               >
-                {category}
+                {category.name}
               </Button>
             ))}
           </div>
